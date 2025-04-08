@@ -1,64 +1,60 @@
 #include <stdio.h>
-#define INFINITY 9999
-#define MAX 10
 
-int cost[MAX][MAX], dist[MAX][MAX], next_hop[MAX][MAX];
-int nodes;
+struct router {
+    unsigned cost[20];
+    unsigned from[20];
+} routingtable[10];
 
-void initialize() {
-    for (int i = 0; i < nodes; i++) {
-        for (int j = 0; j < nodes; j++) {
-            dist[i][j] = cost[i][j];
-            next_hop[i][j] = j;
+int main() {
+    int costmat[20][20];
+    int routers, i, j, k, count = 0;
+
+    printf("Enter number of routers: ");
+    scanf("%d", &routers);
+
+    printf("Enter the cost matrix:\n");
+    for(i = 0; i < routers; i++) {
+        for(j = 0; j < routers; j++) {
+            scanf("%d", &costmat[i][j]);
+            if(i == j) {
+                costmat[i][j] = 0;  // Cost to itself is always 0
+            }
         }
     }
-}
 
-void updateRoutes() {
-    int updated;
+    // Initialize routing table
+    for(i = 0; i < routers; i++) {
+        for(j = 0; j < routers; j++) {
+            routingtable[i].cost[j] = costmat[i][j];
+            routingtable[i].from[j] = j;
+        }
+    }
+
+    int othershortpathexists;
     do {
-        updated = 0;
-        for (int i = 0; i < nodes; i++) {
-            for (int j = 0; j < nodes; j++) {
-                for (int k = 0; k < nodes; k++) {
-                    if (dist[i][j] > dist[i][k] + dist[k][j]) {
-                        dist[i][j] = dist[i][k] + dist[k][j];
-                        next_hop[i][j] = next_hop[i][k];
-                        updated = 1;
+        othershortpathexists = 0;
+        for(i = 0; i < routers; i++) {
+            for(j = 0; j < routers; j++) {
+                for(k = 0; k < routers; k++) {
+                    if(routingtable[i].cost[j] > costmat[i][k] + routingtable[k].cost[j]) {
+                        routingtable[i].cost[j] = costmat[i][k] + routingtable[k].cost[j];
+                        routingtable[i].from[j] = k;
+                        othershortpathexists = 1;
                     }
                 }
             }
         }
-    } while (updated);
-}
+    } while(othershortpathexists != 0);
 
-void display() {
-    for (int i = 0; i < nodes; i++) {
-        printf("\nRouter %d's Routing Table:\n", i + 1);
-        printf("Destination\tCost\tNext Hop\n");
-        for (int j = 0; j < nodes; j++) {
-            printf("%d\t\t%d\t%d\n", j + 1, dist[i][j], next_hop[i][j] + 1);
+    // Print routing table
+    for(i = 0; i < routers; i++) {
+        printf("Router %d\n", i + 1);
+        for(j = 0; j < routers; j++) {
+            printf("Cost to Router %d = %d, Next hop = Router %d\n", j + 1, routingtable[i].cost[j], routingtable[i].from[j] + 1);
         }
+        printf("\n");
     }
-}
-
-int main() {
-    printf("Enter the number of routers: ");
-    scanf("%d", &nodes);
-
-    printf("Enter the cost matrix (enter 9999 for no direct link):\n");
-    for (int i = 0; i < nodes; i++) {
-        for (int j = 0; j < nodes; j++) {
-            scanf("%d", &cost[i][j]);
-            if (i == j) {
-                cost[i][j] = 0;
-            }
-        }
-    }
-
-    initialize();
-    updateRoutes();
-    display();
 
     return 0;
 }
+
